@@ -46,7 +46,16 @@ test("normalizeMoment maps payload and sortMomentsByDate keeps chronological ord
   assert.deepEqual(sorted[0].tags, ["love"]);
 });
 
-test("buildImageUrl uses /api/images with encoded id", () => {
-  assert.equal(buildImageUrl("/api/images", "second_date-1.jpg"), "/api/images/second_date-1");
-  assert.equal(buildImageUrl("/api/images", "broken.name.jpg"), null);
+test("buildImageUrl uses API base and images path", () => {
+  assert.equal(
+    buildImageUrl("", "/api/images", "second_date-1.jpg"),
+    "/api/images/second_date-1"
+  );
+
+  assert.equal(
+    buildImageUrl("https://example.com", "/api/images", "second_date-1.jpg"),
+    "https://example.com/api/images/second_date-1"
+  );
+
+  assert.equal(buildImageUrl("", "/api/images", "broken.name.jpg"), null);
 });

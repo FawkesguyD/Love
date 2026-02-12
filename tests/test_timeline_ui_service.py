@@ -3,10 +3,10 @@ import unittest
 
 import httpx
 
-import services.moments.app.main as main
+import services.timeline_ui.app.main as main
 
 
-class MomentsTimelinePageTests(unittest.TestCase):
+class TimelineUiServiceTests(unittest.TestCase):
     def _get(self, path: str) -> httpx.Response:
         async def _request() -> httpx.Response:
             transport = httpx.ASGITransport(app=main.app)
@@ -24,6 +24,12 @@ class MomentsTimelinePageTests(unittest.TestCase):
         self.assertIn('src="/static/timeline-app.mjs"', response.text)
         self.assertIn('href="/static/timeline.css"', response.text)
 
+    def test_health_returns_ok(self) -> None:
+        response = self._get("/health")
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json(), {"status": "ok", "service": "timeline-ui"})
+
     def test_timeline_static_assets_are_served(self) -> None:
         css = self._get("/static/timeline.css")
         js = self._get("/static/timeline-app.mjs")
@@ -34,7 +40,7 @@ class MomentsTimelinePageTests(unittest.TestCase):
 
         self.assertEqual(js.status_code, 200)
         self.assertIn("javascript", js.headers["content-type"])
-        self.assertIn("fetchTimelineMoments", js.text)
+        self.assertIn("getCardsList", js.text)
 
 
 if __name__ == "__main__":

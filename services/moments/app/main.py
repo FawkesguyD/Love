@@ -6,7 +6,6 @@ import os
 import re
 from contextlib import asynccontextmanager
 from datetime import datetime, timezone
-from pathlib import Path as FilePath
 from typing import Any, Literal
 from urllib.error import HTTPError, URLError
 from urllib.parse import quote
@@ -17,7 +16,6 @@ from bson.errors import InvalidId
 from fastapi import FastAPI, Path as PathParam, Query, Request, Response
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import HTMLResponse, JSONResponse, StreamingResponse
-from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field, field_validator
 from pymongo import ASCENDING, DESCENDING, MongoClient, ReturnDocument
 from pymongo.collection import Collection
@@ -38,11 +36,6 @@ FALSE_VALUES = {"false", "0", "no"}
 MONGO_URI = os.getenv("MONGO_URI", "mongodb://mongo:27017")
 MONGO_DB_NAME = os.getenv("MONGO_DB_NAME", "app")
 PHOTOSTOCK_BASE_URL = os.getenv("PHOTOSTOCK_BASE_URL", "").strip().rstrip("/")
-TIMELINE_CARDS_LIST_ENDPOINT = os.getenv("TIMELINE_CARDS_LIST_ENDPOINT", "/api/cards").strip() or "/api/cards"
-TIMELINE_CARD_DETAILS_ENDPOINT = (
-    os.getenv("TIMELINE_CARD_DETAILS_ENDPOINT", "/api/cards/{id}").strip() or "/api/cards/{id}"
-)
-TIMELINE_IMAGES_ENDPOINT = os.getenv("TIMELINE_IMAGES_ENDPOINT", "/api/images").strip() or "/api/images"
 
 
 def parse_int_env(name: str, default: int) -> int:
@@ -61,10 +54,6 @@ def parse_int_env(name: str, default: int) -> int:
 
 
 PHOTOSTOCK_TIMEOUT_MS = parse_int_env("PHOTOSTOCK_TIMEOUT_MS", 2000)
-TIMELINE_REQUEST_TIMEOUT_MS = parse_int_env("TIMELINE_REQUEST_TIMEOUT_MS", 6000)
-TIMELINE_CACHE_TTL_MS = parse_int_env("TIMELINE_CACHE_TTL_MS", 45000)
-TIMELINE_MAX_MOMENTS = parse_int_env("TIMELINE_MAX_MOMENTS", 500)
-TIMELINE_BATCH_SIZE = parse_int_env("TIMELINE_BATCH_SIZE", 16)
 MEDIA_STREAM_CHUNK_SIZE = 64 * 1024
 MAX_VIEW_IMAGES = 6
 
@@ -563,55 +552,6 @@ def build_message_page(title: str, message: str) -> str:
     return build_layout_html(title=title, body=body)
 
 
-def to_safe_json_script(value: dict[str, Any]) -> str:
-    return json.dumps(value, separators=(",", ":")).replace("</", "<\\/")
-
-
-def build_timeline_page_html() -> str:
-    config = {
-        "cardsListEndpoint": TIMELINE_CARDS_LIST_ENDPOINT,
-        "cardDetailsEndpoint": TIMELINE_CARD_DETAILS_ENDPOINT,
-        "imagesEndpoint": TIMELINE_IMAGES_ENDPOINT,
-        "requestTimeoutMs": TIMELINE_REQUEST_TIMEOUT_MS,
-        "cacheTtlMs": TIMELINE_CACHE_TTL_MS,
-        "maxMoments": TIMELINE_MAX_MOMENTS,
-        "batchSize": TIMELINE_BATCH_SIZE,
-    }
-    config_script = to_safe_json_script(config)
-
-    return (
-        "<!doctype html>"
-        "<html lang=\"en\">"
-        "<head>"
-        "<meta charset=\"utf-8\" />"
-        "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\" />"
-        "<title>Moments Timeline</title>"
-        "<link rel=\"stylesheet\" href=\"/static/timeline.css\" />"
-        "</head>"
-        "<body>"
-        "<main class=\"timeline-shell\" id=\"timeline-app\">"
-        "<header class=\"timeline-hero\">"
-        "<p class=\"timeline-kicker\">Our moments</p>"
-        "<h1>Love Timeline <span aria-hidden=\"true\">&#9825;</span></h1>"
-        "<p class=\"timeline-subtitle\">A minimalist timeline of the moments that matter.</p>"
-        "</header>"
-        "<p id=\"timeline-status\" class=\"sr-only\" aria-live=\"polite\"></p>"
-        "<section id=\"timeline\" class=\"timeline\" aria-label=\"Moments timeline\" role=\"list\"></section>"
-        "<div id=\"timeline-sentinel\" class=\"timeline-sentinel\" aria-hidden=\"true\"></div>"
-        "</main>"
-        "<noscript>"
-        "<section class=\"timeline-noscript\">"
-        "<h2>JavaScript is required</h2>"
-        "<p>Please enable JavaScript to view the interactive timeline.</p>"
-        "</section>"
-        "</noscript>"
-        f"<script>window.__TIMELINE_CONFIG__={config_script};</script>"
-        "<script type=\"module\" src=\"/static/timeline-app.mjs\"></script>"
-        "</body>"
-        "</html>"
-    )
-
-
 def find_one_moment_for_view(*, use_random: bool) -> dict[str, Any] | None:
     if use_random:
         sampled = list(MOMENTS_COLLECTION.aggregate([{"$sample": {"size": 1}}]))
@@ -782,9 +722,6 @@ async def lifespan(_: FastAPI):
 
 
 app = FastAPI(title="Moments Service", lifespan=lifespan)
-STATIC_DIR = FilePath(__file__).resolve().parent / "static"
-if STATIC_DIR.exists():
-    app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
 
 
 @app.exception_handler(ApiError)
@@ -826,11 +763,6 @@ def health() -> JSONResponse:
         return JSONResponse(status_code=503, content={"status": "error", "mongo": "down"})
 
     return JSONResponse(content={"status": "ok", "mongo": "up"})
-
-
-@app.get("/", response_class=HTMLResponse)
-def timeline_page() -> HTMLResponse:
-    return HTMLResponse(content=build_timeline_page_html())
 
 
 @app.post("/api/v1/cards", status_code=201)

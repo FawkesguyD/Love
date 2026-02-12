@@ -5,6 +5,7 @@ function toUtcDate(dateIso) {
   if (Number.isNaN(date.getTime())) {
     return null;
   }
+
   return date;
 }
 
@@ -153,18 +154,37 @@ export function formatMomentDateTime(dateIso, locale = "en-GB") {
   }).format(date);
 }
 
-export function buildImageUrl(imagesEndpoint, filename) {
+function normalizePath(path) {
+  if (typeof path !== "string") {
+    return "";
+  }
+
+  const trimmed = path.trim();
+  if (!trimmed) {
+    return "";
+  }
+
+  if (trimmed.startsWith("http://") || trimmed.startsWith("https://")) {
+    return trimmed;
+  }
+
+  return `/${trimmed.replace(/^\/+/, "")}`;
+}
+
+export function buildImageUrl(apiBaseUrl, imagesPath, filename) {
   const imageId = extractImageId(filename);
   if (!imageId) {
     return null;
   }
 
-  const base = String(imagesEndpoint || "").trim().replace(/\/+$/, "");
-  if (!base) {
+  const path = normalizePath(imagesPath);
+  if (!path) {
     return null;
   }
 
-  return `${base}/${encodeURIComponent(imageId)}`;
+  const base = String(apiBaseUrl || "").trim().replace(/\/+$/, "");
+  const cleanPath = path.replace(/\/+$/, "");
+  return `${base}${cleanPath}/${encodeURIComponent(imageId)}`;
 }
 
 function escapeHtml(value) {
