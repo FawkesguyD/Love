@@ -3,6 +3,15 @@ function toFiniteNumber(value) {
   return Number.isFinite(parsed) ? parsed : null;
 }
 
+function toSafeUtcDate(value) {
+  const timestamp = toUtcMs(value);
+  if (timestamp === null) {
+    return null;
+  }
+
+  return new Date(timestamp);
+}
+
 function toUtcMs(value) {
   if (typeof value === "number" && Number.isFinite(value)) {
     return value;
@@ -41,8 +50,80 @@ export function splitElapsedDuration(totalSecondsValue) {
   };
 }
 
+function addYears(value, years) {
+  const source = toSafeUtcDate(value);
+  if (source === null) {
+    return null;
+  }
+
+  const targetYear = source.getUTCFullYear() + years;
+  const month = source.getUTCMonth();
+  const day = source.getUTCDate();
+  const hour = source.getUTCHours();
+  const minute = source.getUTCMinutes();
+  const second = source.getUTCSeconds();
+  const millisecond = source.getUTCMilliseconds();
+
+  const candidate = new Date(Date.UTC(targetYear, month, day, hour, minute, second, millisecond));
+  if (candidate.getUTCMonth() === month && candidate.getUTCDate() === day) {
+    return candidate;
+  }
+
+  return new Date(Date.UTC(targetYear, month, 28, hour, minute, second, millisecond));
+}
+
+export function calculateElapsedParts(sinceIso, nowValue, fallbackTotalSeconds = null) {
+  const sinceDate = toSafeUtcDate(sinceIso);
+  const nowDate = toSafeUtcDate(nowValue) || new Date();
+
+  if (sinceDate === null) {
+    const fallback = splitElapsedDuration(fallbackTotalSeconds || 0);
+    return {
+      years: 0,
+      ...fallback,
+    };
+  }
+
+  const nowMs = nowDate.getTime();
+  const sinceMs = sinceDate.getTime();
+  if (nowMs <= sinceMs) {
+    return {
+      years: 0,
+      days: 0,
+      hours: 0,
+      minutes: 0,
+      seconds: 0,
+      totalSeconds: 0,
+    };
+  }
+
+  let years = 0;
+  while (true) {
+    const nextAnchor = addYears(sinceDate, years + 1);
+    if (nextAnchor === null || nextAnchor.getTime() > nowMs) {
+      break;
+    }
+    years += 1;
+  }
+
+  const anchor = addYears(sinceDate, years);
+  const anchorMs = anchor === null ? sinceMs : anchor.getTime();
+  const remainder = splitElapsedDuration(Math.floor((nowMs - anchorMs) / 1000));
+
+  return {
+    years,
+    days: remainder.days,
+    hours: remainder.hours,
+    minutes: remainder.minutes,
+    seconds: remainder.seconds,
+    totalSeconds: Math.floor((nowMs - sinceMs) / 1000),
+  };
+}
+
 export function formatElapsedValue(parts) {
-  return `${parts.days}д ${parts.hours}ч ${parts.minutes}м ${parts.seconds}с`;
+  const years = Math.max(0, Math.floor(toFiniteNumber(parts?.years) || 0));
+  const yearLabel = years > 0 ? `${years}г ` : "";
+  return `${yearLabel}${parts.days}д ${parts.hours}ч ${parts.minutes}м ${parts.seconds}с`;
 }
 
 export function formatSinceLabel(sinceIso, locale = "ru-RU") {

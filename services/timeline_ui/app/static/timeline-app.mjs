@@ -3,10 +3,10 @@ import { createMomentCard } from "./components/timeline-item.mjs";
 import { clearContainer, renderEmptyState, renderErrorState, renderLoadingState } from "./components/states.mjs";
 import { buildImageUrl, isSummaryMoment, normalizeMoment, sortMomentsByDate } from "./timeline-data.mjs";
 import {
+  calculateElapsedParts,
   formatElapsedValue,
   formatSinceLabel,
   parseTimerPayload,
-  splitElapsedDuration,
 } from "./lib/timer-utils.mjs";
 
 const DEFAULT_CONFIG = {
@@ -31,6 +31,7 @@ const state = {
   sentinelObserver: null,
   timer: {
     baseTotalSeconds: null,
+    baseNowMs: null,
     baseLocalMs: null,
     sinceIso: null,
     tickIntervalId: null,
@@ -393,7 +394,7 @@ function setTimerUi({ value, meta, tone = "normal" }) {
 }
 
 function renderElapsedTick() {
-  if (state.timer.baseTotalSeconds === null || state.timer.baseLocalMs === null) {
+  if (state.timer.baseTotalSeconds === null || state.timer.baseLocalMs === null || state.timer.baseNowMs === null) {
     setTimerUi({
       value: state.timer.syncFailed ? "—" : "...",
       meta: state.timer.syncFailed ? "Timer API недоступен" : "Подключаем timer API",
@@ -403,7 +404,8 @@ function renderElapsedTick() {
   }
 
   const deltaSeconds = Math.max(0, Math.floor((Date.now() - state.timer.baseLocalMs) / 1000));
-  const parts = splitElapsedDuration(state.timer.baseTotalSeconds + deltaSeconds);
+  const estimatedNowMs = state.timer.baseNowMs + Date.now() - state.timer.baseLocalMs;
+  const parts = calculateElapsedParts(state.timer.sinceIso, estimatedNowMs, state.timer.baseTotalSeconds + deltaSeconds);
   const value = formatElapsedValue(parts);
 
   const sinceLabel = formatSinceLabel(state.timer.sinceIso);
@@ -433,6 +435,7 @@ async function syncTimer() {
     const serverLagSeconds = Math.max(0, Math.floor((Date.now() - parsed.baseNowMs) / 1000));
 
     state.timer.baseTotalSeconds = parsed.totalSeconds + serverLagSeconds;
+    state.timer.baseNowMs = parsed.baseNowMs + serverLagSeconds * 1000;
     state.timer.baseLocalMs = Date.now();
     state.timer.sinceIso = parsed.sinceIso;
     state.timer.syncFailed = false;

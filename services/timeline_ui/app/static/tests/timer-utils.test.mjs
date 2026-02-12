@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import {
+  calculateElapsedParts,
   formatElapsedValue,
   parseTimerPayload,
   splitElapsedDuration,
@@ -47,4 +48,15 @@ test("parseTimerPayload falls back to elapsed object when totalSeconds missing",
   });
 
   assert.equal(parsed.totalSeconds, 93784);
+});
+
+test("calculateElapsedParts exposes years when anniversary is crossed", () => {
+  const parts = calculateElapsedParts("2025-03-06T18:00:00.000Z", "2026-03-06T18:00:01.000Z");
+
+  assert.equal(parts.years, 1);
+  assert.equal(parts.days, 0);
+  assert.equal(parts.hours, 0);
+  assert.equal(parts.minutes, 0);
+  assert.equal(parts.seconds, 1);
+  assert.equal(formatElapsedValue(parts), "1г 0д 0ч 0м 1с");
 });
