@@ -28,6 +28,10 @@ docker compose up --build
 
 После старта:
 
+- Timeline SPA (Traefik): `http://localhost:3000/`
+- Cards API via Traefik: `http://localhost:3000/api/cards`
+- Card by id via Traefik: `http://localhost:3000/api/cards/{id}`
+- Images API via Traefik: `http://localhost:3000/api/images/{image_id}`
 - Image API: `http://localhost:8000/images/cat?display=true`
 - Carousel image: `http://localhost:8001/carousel`
 - Carousel viewer: `http://localhost:8001/carousel/view?refresh=10`
@@ -120,6 +124,12 @@ curl "http://localhost:8002/api/v1/cards?limit=2&order=desc&cursor=${NEXT_CURSOR
 curl http://localhost:8002/api/v1/cards/<card_id>
 ```
 
+Через Traefik тот же endpoint доступен как:
+
+```bash
+curl http://localhost:3000/api/cards/<card_id>
+```
+
 ### HTML viewer `/cards/view`
 
 - `GET /cards/view` -> показывает одну карточку (по умолчанию latest по `date desc, _id desc`)
@@ -149,6 +159,12 @@ curl -X PATCH http://localhost:8002/api/v1/cards/<card_id> \
 Существующий `photostock` endpoint: `GET /images/{image}` принимает базовое имя без расширения.  
 Пример: для `IMG_001.jpg` вызывай `GET /images/IMG_001`.
 
+Через Traefik:
+
+```bash
+curl http://localhost:3000/api/images/IMG_001
+```
+
 ### DELETE `/api/v1/cards/:id`
 
 ```bash
@@ -175,6 +191,29 @@ Legacy aliases (временная обратная совместимость):
 ```
 
 Коды: `400` (валидация), `404` (не найдено), `500` (unexpected).
+
+## Timeline SPA (`/`)
+
+В `moments` добавлена одностраничная таймлайн-страница:
+
+- `GET /` (через Traefik: `http://localhost:3000/`)
+- вертикальная шкала + точки + карточки событий
+- сортировка по времени (`asc`)
+- группировка по дате
+- состояния: `loading`, `empty`, `error + retry`
+- lazy-loading изображений через `/api/images/{image_id}`
+- легкие scroll-анимации и клавиатурная навигация (Arrow Up/Down по карточкам)
+
+Источник данных:
+
+- список: `GET /api/cards` (fallback: `/api/v1/cards`)
+- карточка по id (если нужна гидрация): `GET /api/cards/{id}` (fallback: `/api/v1/cards/{id}`)
+
+Локальные тесты фронтенд-утилит:
+
+```bash
+node --test services/moments/app/static/tests/*.test.mjs
+```
 
 ## Timer API
 
@@ -265,6 +304,13 @@ docker compose --profile diag stop curl-diag
 - `MONGO_DB_NAME=app`
 - `PHOTOSTOCK_BASE_URL=http://photostock:8000`
 - `PHOTOSTOCK_TIMEOUT_MS=2000`
+- `TIMELINE_CARDS_LIST_ENDPOINT=/api/cards`
+- `TIMELINE_CARD_DETAILS_ENDPOINT=/api/cards/{id}`
+- `TIMELINE_IMAGES_ENDPOINT=/api/images`
+- `TIMELINE_REQUEST_TIMEOUT_MS=6000`
+- `TIMELINE_CACHE_TTL_MS=45000`
+- `TIMELINE_MAX_MOMENTS=500`
+- `TIMELINE_BATCH_SIZE=16`
 - `HOST=0.0.0.0`
 - `PORT=8002`
 

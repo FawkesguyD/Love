@@ -156,15 +156,24 @@ services:
       - "traefik.http.routers.cards-api.entrypoints=web"
       - "traefik.http.routers.cards-api.middlewares=cards-api-rewrite"
       - "traefik.http.routers.cards-api.service=cards"
+      - "traefik.http.routers.cards-api.priority=110"
 
       # UI
       - "traefik.http.routers.cards-ui.rule=PathPrefix(`/ui/cards`)"
       - "traefik.http.routers.cards-ui.entrypoints=web"
       - "traefik.http.routers.cards-ui.middlewares=cards-ui-rewrite"
       - "traefik.http.routers.cards-ui.service=cards"
+      - "traefik.http.routers.cards-ui.priority=100"
+
+      # Timeline SPA
+      - "traefik.http.routers.cards-home.rule=Path(`/`) || PathPrefix(`/static`)"
+      - "traefik.http.routers.cards-home.entrypoints=web"
+      - "traefik.http.routers.cards-home.service=cards"
+      - "traefik.http.routers.cards-home.priority=1"
 
       # Middlewares
-      - "traefik.http.middlewares.cards-api-rewrite.replacepath.path=/api/v1/cards"
+      - "traefik.http.middlewares.cards-api-rewrite.replacepathregex.regex=^/api/cards(/.*)?$"
+      - "traefik.http.middlewares.cards-api-rewrite.replacepathregex.replacement=/api/v1/cards$${1}"
       - "traefik.http.middlewares.cards-ui-rewrite.replacepath.path=/cards/view"
     environment:
       MONGO_URI: mongodb://dev:devpassword@mongo:27017/?authSource=admin

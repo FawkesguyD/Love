@@ -14,6 +14,7 @@ FastAPI-сервис для хранения метаданных карточе
 
 ## Endpoints
 
+- `GET /` (Timeline SPA)
 - `GET /health`
 - `POST /api/v1/cards`
 - `GET /api/v1/cards`
@@ -28,6 +29,23 @@ Legacy aliases (обратная совместимость):
 
 - `/api/v1/moments...` -> алиас к `/api/v1/cards...`
 - `/view...` -> алиас к `/cards/view...`
+
+## Timeline SPA
+
+`GET /` возвращает одностраничный timeline UI:
+
+- вертикальная линия времени и точки
+- карточки с фото, датой, текстом
+- сортировка по дате (`asc`) и группировка по дню
+- состояния `loading`, `empty`, `error + retry`
+- lazy-loading изображений и scroll reveal анимации
+- keyboard navigation (Arrow Up/Down по карточкам)
+
+По умолчанию страница использует проксированные endpoint-ы:
+
+- `/api/cards`
+- `/api/cards/{id}`
+- `/api/images/{image_id}`
 
 ## HTML Viewer
 
@@ -63,6 +81,13 @@ Legacy aliases (обратная совместимость):
 - `MONGO_DB_NAME` (default: `app`)
 - `PHOTOSTOCK_BASE_URL` (required for server-side media proxy, example: `http://photostock:8000`)
 - `PHOTOSTOCK_TIMEOUT_MS` (optional, default: `2000`)
+- `TIMELINE_CARDS_LIST_ENDPOINT` (default: `/api/cards`)
+- `TIMELINE_CARD_DETAILS_ENDPOINT` (default: `/api/cards/{id}`)
+- `TIMELINE_IMAGES_ENDPOINT` (default: `/api/images`)
+- `TIMELINE_REQUEST_TIMEOUT_MS` (default: `6000`)
+- `TIMELINE_CACHE_TTL_MS` (default: `45000`)
+- `TIMELINE_MAX_MOMENTS` (default: `500`)
+- `TIMELINE_BATCH_SIZE` (default: `16`)
 - `HOST` (default: `0.0.0.0`)
 - `PORT` (default: `8002`)
 
@@ -78,9 +103,9 @@ Legacy aliases (обратная совместимость):
 
 Для HTML viewer картинка отдается через same-origin proxy в `moments`:
 
-- итоговый `src` в HTML: `/media/IMG_001.jpg`
-- `moments` валидирует `filename`, извлекает basename (`IMG_001`) и уже сервером запрашивает `photostock`:
-  `GET ${PHOTOSTOCK_BASE_URL}/images/IMG_001`
+- итоговый `src` в HTML: `/api/images/IMG_001`
+- filename нормализуется до basename (`IMG_001`), после чего запрос уходит в `photostock`:
+  `GET /images/IMG_001`
 
 Важно: браузер не обращается к `PHOTOSTOCK_BASE_URL` напрямую, этот URL используется только сервисом `moments`.
 
@@ -88,4 +113,10 @@ Legacy aliases (обратная совместимость):
 
 ```bash
 docker compose up --build
+```
+
+Фронтенд unit/snapshot тесты:
+
+```bash
+node --test services/moments/app/static/tests/*.test.mjs
 ```
