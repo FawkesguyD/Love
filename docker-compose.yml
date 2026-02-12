@@ -165,12 +165,6 @@ services:
       - "traefik.http.routers.cards-ui.service=cards"
       - "traefik.http.routers.cards-ui.priority=100"
 
-      # Timeline SPA
-      - "traefik.http.routers.cards-home.rule=Path(`/`) || PathPrefix(`/static`)"
-      - "traefik.http.routers.cards-home.entrypoints=web"
-      - "traefik.http.routers.cards-home.service=cards"
-      - "traefik.http.routers.cards-home.priority=1"
-
       # Middlewares
       - "traefik.http.middlewares.cards-api-rewrite.replacepathregex.regex=^/api/cards(/.*)?$"
       - "traefik.http.middlewares.cards-api-rewrite.replacepathregex.replacement=/api/v1/cards$${1}"
@@ -181,6 +175,33 @@ services:
       PHOTOSTOCK_BASE_URL: http://photostock:8000
       HOST: 0.0.0.0
       PORT: 8002
+    networks:
+      - valentine-default
+
+  timeline-ui:
+    build: ./services/timeline_ui
+    container_name: timeline-ui
+    labels:
+      - "traefik.enable=true"
+
+      - "traefik.http.services.timeline-ui.loadbalancer.server.port=8010"
+
+      - "traefik.http.routers.timeline-home.rule=Path(`/`) || PathPrefix(`/static`)"
+      - "traefik.http.routers.timeline-home.entrypoints=web"
+      - "traefik.http.routers.timeline-home.service=timeline-ui"
+      - "traefik.http.routers.timeline-home.priority=1"
+    environment:
+      API_BASE_URL: ""
+      CARDS_LIST_PATH: /api/cards
+      CARD_BY_ID_PATH_TEMPLATE: /api/cards/{id}
+      IMAGES_PATH: /api/images
+      REQUEST_TIMEOUT_MS: 6000
+      CACHE_TTL_MS: 45000
+      MAX_MOMENTS: 500
+      BATCH_SIZE: 16
+      MAX_RETRIES: 2
+      HOST: 0.0.0.0
+      PORT: 8010
     networks:
       - valentine-default
 

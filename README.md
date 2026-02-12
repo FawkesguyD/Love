@@ -1,10 +1,11 @@
-# PhotoStock + Carousel + Moments + Timer + MongoDB
+# Timeline UI + PhotoStock + Carousel + Moments + Timer + MongoDB
 
 Репозиторий содержит сервисы:
 
 - `photostock` (`services/photostock`) — API для выдачи изображения по имени без расширения
 - `carousel` (`services/carousel`) — API выдачи изображений по очереди/случайно + viewer
 - `moments` (`services/moments`) — API метаданных моментов (MongoDB)
+- `timeline_ui` (`services/timeline_ui`) — отдельный UI-сервис витрины таймлайна
 - `timer` (`services/timer`) — API расчета прошедшего времени от фиксированной UTC-точки
 - `s3` (MinIO) — S3-совместимое хранилище изображений
 - `s3-init` — инициализация bucket и seed-данных
@@ -194,7 +195,7 @@ Legacy aliases (временная обратная совместимость):
 
 ## Timeline SPA (`/`)
 
-В `moments` добавлена одностраничная таймлайн-страница:
+Одностраничная таймлайн-страница отдается отдельным UI-сервисом `timeline-ui`:
 
 - `GET /` (через Traefik: `http://localhost:3000/`)
 - вертикальная шкала + точки + карточки событий
@@ -212,7 +213,7 @@ Legacy aliases (временная обратная совместимость):
 Локальные тесты фронтенд-утилит:
 
 ```bash
-node --test services/moments/app/static/tests/*.test.mjs
+node --test services/timeline_ui/app/static/tests/*.test.mjs
 ```
 
 ## Timer API
@@ -304,15 +305,22 @@ docker compose --profile diag stop curl-diag
 - `MONGO_DB_NAME=app`
 - `PHOTOSTOCK_BASE_URL=http://photostock:8000`
 - `PHOTOSTOCK_TIMEOUT_MS=2000`
-- `TIMELINE_CARDS_LIST_ENDPOINT=/api/cards`
-- `TIMELINE_CARD_DETAILS_ENDPOINT=/api/cards/{id}`
-- `TIMELINE_IMAGES_ENDPOINT=/api/images`
-- `TIMELINE_REQUEST_TIMEOUT_MS=6000`
-- `TIMELINE_CACHE_TTL_MS=45000`
-- `TIMELINE_MAX_MOMENTS=500`
-- `TIMELINE_BATCH_SIZE=16`
 - `HOST=0.0.0.0`
 - `PORT=8002`
+
+Для `timeline-ui`:
+
+- `API_BASE_URL=`
+- `CARDS_LIST_PATH=/api/cards`
+- `CARD_BY_ID_PATH_TEMPLATE=/api/cards/{id}`
+- `IMAGES_PATH=/api/images`
+- `REQUEST_TIMEOUT_MS=6000`
+- `CACHE_TTL_MS=45000`
+- `MAX_MOMENTS=500`
+- `BATCH_SIZE=16`
+- `MAX_RETRIES=2`
+- `HOST=0.0.0.0`
+- `PORT=8010`
 
 Для `timer`:
 
