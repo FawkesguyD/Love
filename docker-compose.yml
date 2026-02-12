@@ -201,7 +201,7 @@ services:
       MAX_MOMENTS: 500
       BATCH_SIZE: 16
       MAX_RETRIES: 2
-      TIMER_SYNC_INTERVAL_MS: 60000
+      TIMER_SYNC_INTERVAL_MS: 20000
       HOST: 0.0.0.0
       PORT: 8010
     networks:

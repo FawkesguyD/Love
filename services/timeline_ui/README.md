@@ -9,7 +9,7 @@ Standalone UI microservice for the Valentine timeline landing page.
 
 ## Features
 
-- Sticky countdown block (uses Timer API)
+- Sticky elapsed timer block (uses Timer API)
 - Vertical timeline with cards and dots
 - Multi-image golden-spiral gallery (3-6 photos)
 - Loading/empty/error states and retry
@@ -27,7 +27,7 @@ Standalone UI microservice for the Valentine timeline landing page.
 - `MAX_MOMENTS` (default: `500`)
 - `BATCH_SIZE` (default: `16`)
 - `MAX_RETRIES` (default: `2`)
-- `TIMER_SYNC_INTERVAL_MS` (default: `60000`)
+- `TIMER_SYNC_INTERVAL_MS` (default: `20000`)
 - `HOST` (default: `0.0.0.0`)
 - `PORT` (default: `8010`)
 

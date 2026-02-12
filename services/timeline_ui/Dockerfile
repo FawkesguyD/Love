@@ -1,9 +1,16 @@
-FROM python:3.12-slim
+FROM python:3.12-slim AS builder
 
 WORKDIR /app
 
 COPY requirements.txt ./
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip wheel --no-cache-dir --wheel-dir /wheels -r requirements.txt
+
+FROM python:3.12-slim
+
+WORKDIR /app
+
+COPY --from=builder /wheels /wheels
+RUN pip install --no-cache-dir /wheels/*
 
 COPY app ./app
 
@@ -17,7 +24,7 @@ ENV CACHE_TTL_MS=45000
 ENV MAX_MOMENTS=500
 ENV BATCH_SIZE=16
 ENV MAX_RETRIES=2
-ENV TIMER_SYNC_INTERVAL_MS=60000
+ENV TIMER_SYNC_INTERVAL_MS=20000
 ENV HOST=0.0.0.0
 ENV PORT=8010
 
