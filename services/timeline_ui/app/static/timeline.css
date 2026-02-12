@@ -34,7 +34,51 @@ body {
 .timeline-shell {
   width: min(1120px, 100% - 28px);
   margin: 0 auto;
-  padding: 34px 0 72px;
+  padding: 16px 0 72px;
+}
+
+.countdown {
+  position: sticky;
+  top: 10px;
+  z-index: 32;
+  margin: 0 auto 16px;
+  width: min(760px, 100% - 8px);
+  border-radius: 16px;
+  border: 1px solid #f3d7e0;
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(8px);
+  box-shadow: 0 10px 24px rgba(191, 61, 101, 0.1);
+  padding: 12px 16px;
+  text-align: center;
+}
+
+.countdown[data-tone="loading"] {
+  opacity: 0.82;
+}
+
+.countdown[data-tone="warning"] {
+  border-color: #efb7c7;
+}
+
+.countdown-label {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.83rem;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+}
+
+.countdown-value {
+  margin: 4px 0 0;
+  font-size: clamp(1.2rem, 3vw, 1.65rem);
+  font-weight: 800;
+  color: #a93358;
+}
+
+.countdown-meta {
+  margin: 2px 0 0;
+  font-size: 0.77rem;
+  color: var(--muted);
 }
 
 .timeline-hero {
@@ -100,9 +144,10 @@ body {
 }
 
 .timeline-day {
-  display: grid;
-  place-items: center;
+  display: flex;
+  justify-content: flex-start;
   margin: 8px 0 18px;
+  padding-left: clamp(20px, 5vw, 80px);
 }
 
 .timeline-day-label {
@@ -168,6 +213,26 @@ body {
   left: -44px;
 }
 
+.timeline-dot-badge {
+  position: absolute;
+  top: 16px;
+  padding: 3px 8px;
+  border-radius: 999px;
+  border: 1px solid #f2c9d5;
+  font-size: 0.7rem;
+  color: var(--muted);
+  background: #fff;
+  pointer-events: none;
+}
+
+.timeline-card.side-left .timeline-dot-badge {
+  right: -124px;
+}
+
+.timeline-card.side-right .timeline-dot-badge {
+  left: -124px;
+}
+
 .timeline-date {
   margin: 0;
   color: var(--muted);
@@ -224,6 +289,97 @@ body {
   color: var(--muted);
   font-size: 0.9rem;
   background: var(--bg-soft);
+}
+
+.timeline-media {
+  margin-top: 4px;
+}
+
+.timeline-spiral {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(13, minmax(0, 1fr));
+  grid-template-rows: repeat(8, minmax(0, 1fr));
+  gap: 6px;
+  min-height: 168px;
+}
+
+.spiral-item {
+  margin: 0;
+  overflow: hidden;
+  border-radius: 10px;
+  border: 1px solid #f6dce4;
+  background: #f8edf1;
+}
+
+.spiral-image {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.spiral-fallback {
+  width: 100%;
+  height: 100%;
+  display: grid;
+  place-items: center;
+  color: var(--muted);
+  font-size: 0.76rem;
+  text-align: center;
+  padding: 6px;
+}
+
+.spiral-item-1 {
+  grid-area: 1 / 1 / 9 / 9;
+}
+
+.spiral-item-2 {
+  grid-area: 1 / 9 / 6 / 14;
+}
+
+.spiral-item-3 {
+  grid-area: 6 / 11 / 9 / 14;
+}
+
+.spiral-item-4 {
+  grid-area: 7 / 9 / 9 / 11;
+}
+
+.spiral-item-5 {
+  grid-area: 6 / 9 / 7 / 10;
+}
+
+.spiral-item-6 {
+  grid-area: 6 / 10 / 7 / 11;
+}
+
+.timeline-spiral.count-2 .spiral-item-1 {
+  grid-area: 1 / 1 / 9 / 9;
+}
+
+.timeline-spiral.count-2 .spiral-item-2 {
+  grid-area: 1 / 9 / 9 / 14;
+}
+
+.timeline-spiral.count-3 .spiral-item-3 {
+  grid-area: 6 / 9 / 9 / 14;
+}
+
+.timeline-spiral.count-4 .spiral-item-4 {
+  grid-area: 6 / 9 / 9 / 11;
+}
+
+.timeline-spiral.count-5 .spiral-item-5 {
+  grid-area: 6 / 9 / 7 / 11;
+}
+
+.timeline-spiral-more {
+  margin: 6px 0 0;
+  text-align: right;
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 700;
 }
 
 .timeline-panel {
@@ -340,14 +496,18 @@ body {
 }
 
 @media (max-width: 920px) {
+  .countdown {
+    width: min(760px, 100% - 4px);
+  }
+
   .timeline::before {
     left: 22px;
     transform: none;
   }
 
   .timeline-day {
-    justify-content: start;
     margin-left: 56px;
+    padding-left: 0;
   }
 
   .timeline-card,
@@ -369,12 +529,36 @@ body {
     left: -47px;
     right: auto;
   }
+
+  .timeline-card .timeline-dot-badge,
+  .timeline-card.side-left .timeline-dot-badge,
+  .timeline-card.side-right .timeline-dot-badge {
+    left: -111px;
+    right: auto;
+  }
 }
 
 @media (max-width: 560px) {
   .timeline-shell {
     width: min(1120px, 100% - 18px);
-    padding-top: 24px;
+    padding-top: 10px;
+  }
+
+  .countdown {
+    top: 6px;
+    padding: 10px 12px;
+  }
+
+  .countdown-label {
+    font-size: 0.72rem;
+  }
+
+  .countdown-value {
+    font-size: 1.14rem;
+  }
+
+  .countdown-meta {
+    font-size: 0.72rem;
   }
 
   .timeline-hero {
@@ -391,5 +575,10 @@ body {
 
   .timeline-card-title {
     margin-top: 6px;
+  }
+
+  .timeline-spiral {
+    min-height: 142px;
+    gap: 5px;
   }
 }

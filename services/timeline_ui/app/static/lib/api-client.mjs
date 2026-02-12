@@ -113,6 +113,7 @@ export function buildApiConfig(config) {
     apiBaseUrl: String(config.apiBaseUrl || "").trim().replace(/\/+$/, ""),
     cardsListPaths: uniqueStrings([config.cardsListPath, "/api/v1/cards"]),
     cardByIdPathTemplates: uniqueStrings([config.cardByIdPathTemplate, "/api/v1/cards/{id}"]),
+    timerPaths: uniqueStrings([config.timerPath, "/api/timer", "/time"]),
     requestTimeoutMs: Number(config.requestTimeoutMs) > 0 ? Number(config.requestTimeoutMs) : 6000,
     maxRetries: Number.isFinite(retries) && retries > 0 ? retries : 2,
   };
@@ -167,4 +168,27 @@ export async function getCardById(config, cardId) {
   }
 
   throw lastError || new Error("Card details endpoint is unavailable");
+}
+
+export async function getTimer(config) {
+  let lastError = null;
+
+  for (const timerPath of config.timerPaths) {
+    const url = buildUrl(config.apiBaseUrl, timerPath);
+
+    try {
+      return await fetchJson(url.toString(), {
+        timeoutMs: config.requestTimeoutMs,
+        retries: config.maxRetries,
+      });
+    } catch (error) {
+      lastError = error;
+      if (error instanceof HttpError && error.status === 404) {
+        continue;
+      }
+      throw error;
+    }
+  }
+
+  throw lastError || new Error("Timer endpoint is unavailable");
 }

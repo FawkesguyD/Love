@@ -46,6 +46,19 @@ test("normalizeMoment maps payload and sortMomentsByDate keeps chronological ord
   assert.deepEqual(sorted[0].tags, ["love"]);
 });
 
+test("normalizeMoment supports imageIds and imageId compatibility fields", () => {
+  const normalized = normalizeMoment({
+    _id: "3",
+    title: "Compat",
+    date: "2026-02-14T12:00:00.000Z",
+    imageIds: ["a.jpg", "b.png"],
+    imageId: "c.webp",
+  });
+
+  assert.ok(normalized);
+  assert.deepEqual(normalized.images, ["a.jpg", "b.png", "c.webp"]);
+});
+
 test("buildImageUrl uses API base and images path", () => {
   assert.equal(
     buildImageUrl("", "/api/images", "second_date-1.jpg"),

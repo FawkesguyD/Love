@@ -31,11 +31,13 @@ API_BASE_URL = os.getenv("API_BASE_URL", "").strip().rstrip("/")
 CARDS_LIST_PATH = os.getenv("CARDS_LIST_PATH", "/api/cards").strip() or "/api/cards"
 CARD_BY_ID_PATH_TEMPLATE = os.getenv("CARD_BY_ID_PATH_TEMPLATE", "/api/cards/{id}").strip() or "/api/cards/{id}"
 IMAGES_PATH = os.getenv("IMAGES_PATH", "/api/images").strip() or "/api/images"
+TIMER_PATH = os.getenv("TIMER_PATH", "/api/timer").strip() or "/api/timer"
 REQUEST_TIMEOUT_MS = parse_int_env("REQUEST_TIMEOUT_MS", 6000)
 CACHE_TTL_MS = parse_int_env("CACHE_TTL_MS", 45000)
 MAX_MOMENTS = parse_int_env("MAX_MOMENTS", 500)
 BATCH_SIZE = parse_int_env("BATCH_SIZE", 16)
 MAX_RETRIES = parse_int_env("MAX_RETRIES", 2)
+TIMER_SYNC_INTERVAL_MS = parse_int_env("TIMER_SYNC_INTERVAL_MS", 60000)
 
 
 app = FastAPI(title="Timeline UI Service")
@@ -54,11 +56,13 @@ def build_page_html() -> str:
         "cardsListPath": CARDS_LIST_PATH,
         "cardByIdPathTemplate": CARD_BY_ID_PATH_TEMPLATE,
         "imagesPath": IMAGES_PATH,
+        "timerPath": TIMER_PATH,
         "requestTimeoutMs": REQUEST_TIMEOUT_MS,
         "cacheTtlMs": CACHE_TTL_MS,
         "maxMoments": MAX_MOMENTS,
         "batchSize": BATCH_SIZE,
         "maxRetries": MAX_RETRIES,
+        "timerSyncIntervalMs": TIMER_SYNC_INTERVAL_MS,
     }
 
     config_script = to_safe_json_script(config)
@@ -74,6 +78,11 @@ def build_page_html() -> str:
         "</head>"
         "<body>"
         "<main class=\"timeline-shell\" id=\"timeline-app\">"
+        "<section class=\"countdown\" id=\"countdown\" aria-live=\"polite\">"
+        "<p class=\"countdown-label\">До 14 февраля осталось</p>"
+        "<p class=\"countdown-value\" id=\"countdown-value\">...</p>"
+        "<p class=\"countdown-meta\" id=\"countdown-meta\"></p>"
+        "</section>"
         "<header class=\"timeline-hero\">"
         "<p class=\"timeline-kicker\">Our moments</p>"
         "<h1>Love Timeline <span aria-hidden=\"true\">&#9825;</span></h1>"

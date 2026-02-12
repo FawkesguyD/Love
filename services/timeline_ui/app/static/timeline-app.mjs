@@ -1,18 +1,26 @@
-import { buildApiConfig, getCardById, getCardsList, HttpError } from "./lib/api-client.mjs";
+import { buildApiConfig, getCardById, getCardsList, getTimer, HttpError } from "./lib/api-client.mjs";
 import { createDayDivider, createMomentCard } from "./components/timeline-item.mjs";
 import { clearContainer, renderEmptyState, renderErrorState, renderLoadingState } from "./components/states.mjs";
 import { buildDayKey, buildImageUrl, isSummaryMoment, normalizeMoment, sortMomentsByDate } from "./timeline-data.mjs";
+import {
+  formatCountdownValue,
+  formatTargetDateLabel,
+  getNextValentineTargetUtcMs,
+  splitRemainingDuration,
+} from "./lib/timer-utils.mjs";
 
 const DEFAULT_CONFIG = {
   apiBaseUrl: "",
   cardsListPath: "/api/cards",
   cardByIdPathTemplate: "/api/cards/{id}",
   imagesPath: "/api/images",
+  timerPath: "/api/timer",
   requestTimeoutMs: 6000,
   cacheTtlMs: 45000,
   maxMoments: 500,
   batchSize: 16,
   maxRetries: 2,
+  timerSyncIntervalMs: 60000,
 };
 
 const state = {
@@ -22,6 +30,13 @@ const state = {
   lastRenderedDay: null,
   revealObserver: null,
   sentinelObserver: null,
+  timer: {
+    targetUtcMs: null,
+    serverDriftMs: 0,
+    tickIntervalId: null,
+    syncIntervalId: null,
+    syncFailed: false,
+  },
 };
 
 const elements = {
@@ -29,6 +44,9 @@ const elements = {
   timeline: document.getElementById("timeline"),
   status: document.getElementById("timeline-status"),
   sentinel: document.getElementById("timeline-sentinel"),
+  countdown: document.getElementById("countdown"),
+  countdownValue: document.getElementById("countdown-value"),
+  countdownMeta: document.getElementById("countdown-meta"),
 };
 
 function readRuntimeConfig() {
@@ -47,11 +65,14 @@ function readRuntimeConfig() {
     cardsListPath: String(merged.cardsListPath || DEFAULT_CONFIG.cardsListPath).trim(),
     cardByIdPathTemplate: String(merged.cardByIdPathTemplate || DEFAULT_CONFIG.cardByIdPathTemplate).trim(),
     imagesPath: String(merged.imagesPath || DEFAULT_CONFIG.imagesPath).trim(),
+    timerPath: String(merged.timerPath || DEFAULT_CONFIG.timerPath).trim(),
     requestTimeoutMs: Number(merged.requestTimeoutMs) > 0 ? Number(merged.requestTimeoutMs) : DEFAULT_CONFIG.requestTimeoutMs,
     cacheTtlMs: Number(merged.cacheTtlMs) > 0 ? Number(merged.cacheTtlMs) : DEFAULT_CONFIG.cacheTtlMs,
     maxMoments: Number(merged.maxMoments) > 0 ? Number(merged.maxMoments) : DEFAULT_CONFIG.maxMoments,
     batchSize: Number(merged.batchSize) > 0 ? Number(merged.batchSize) : DEFAULT_CONFIG.batchSize,
     maxRetries: Number(merged.maxRetries) > 0 ? Number(merged.maxRetries) : DEFAULT_CONFIG.maxRetries,
+    timerSyncIntervalMs:
+      Number(merged.timerSyncIntervalMs) > 0 ? Number(merged.timerSyncIntervalMs) : DEFAULT_CONFIG.timerSyncIntervalMs,
   };
 }
 
@@ -304,12 +325,15 @@ function appendBatch() {
       state.lastRenderedDay = dayKey;
     }
 
-    const imageUrl = buildImageUrl(state.config.apiBaseUrl, state.config.imagesPath, moment.images[0]);
+    const imageUrls = moment.images.slice(0, 6).map((imageName) => {
+      return buildImageUrl(state.config.apiBaseUrl, state.config.imagesPath, imageName);
+    });
+
     fragment.append(
       createMomentCard({
         moment,
         index,
-        imageUrl,
+        imageUrls,
         revealObserver: state.revealObserver,
       })
     );
@@ -365,6 +389,91 @@ async function refresh({ withLoading }) {
   }
 }
 
+function setCountdownUi({ value, meta, tone = "normal" }) {
+  if (!elements.countdown || !elements.countdownValue || !elements.countdownMeta) {
+    return;
+  }
+
+  elements.countdown.dataset.tone = tone;
+  elements.countdownValue.textContent = value;
+  elements.countdownMeta.textContent = meta;
+}
+
+function renderCountdownTick() {
+  if (state.timer.targetUtcMs === null) {
+    setCountdownUi({
+      value: "...",
+      meta: "Подключаем timer API",
+      tone: "loading",
+    });
+    return;
+  }
+
+  const syncedNowMs = Date.now() + state.timer.serverDriftMs;
+  if (syncedNowMs >= state.timer.targetUtcMs) {
+    state.timer.targetUtcMs = getNextValentineTargetUtcMs(syncedNowMs + 1000);
+  }
+
+  const remaining = splitRemainingDuration(state.timer.targetUtcMs - syncedNowMs);
+  const countdownValue = formatCountdownValue(remaining);
+  const targetLabel = formatTargetDateLabel(state.timer.targetUtcMs);
+
+  const meta = state.timer.syncFailed
+    ? `Локальный расчет до ${targetLabel} UTC · sync timer API недоступен`
+    : `До ${targetLabel} UTC`;
+
+  setCountdownUi({
+    value: countdownValue,
+    meta,
+    tone: state.timer.syncFailed ? "warning" : "normal",
+  });
+}
+
+async function syncTimer() {
+  const apiConfig = buildApiConfig(state.config);
+
+  try {
+    const timerPayload = await getTimer(apiConfig);
+    const serverNowMs = Date.parse(String(timerPayload?.now || ""));
+
+    if (Number.isFinite(serverNowMs)) {
+      state.timer.serverDriftMs = serverNowMs - Date.now();
+      state.timer.targetUtcMs = getNextValentineTargetUtcMs(serverNowMs);
+    } else {
+      state.timer.targetUtcMs = getNextValentineTargetUtcMs(Date.now());
+      state.timer.serverDriftMs = 0;
+    }
+
+    state.timer.syncFailed = false;
+  } catch (_error) {
+    if (state.timer.targetUtcMs === null) {
+      state.timer.targetUtcMs = getNextValentineTargetUtcMs(Date.now());
+    }
+
+    state.timer.syncFailed = true;
+  }
+
+  renderCountdownTick();
+}
+
+function startCountdown() {
+  state.timer.tickIntervalId && window.clearInterval(state.timer.tickIntervalId);
+  state.timer.syncIntervalId && window.clearInterval(state.timer.syncIntervalId);
+
+  renderCountdownTick();
+
+  state.timer.tickIntervalId = window.setInterval(() => {
+    renderCountdownTick();
+  }, 1000);
+
+  void syncTimer();
+
+  const syncPeriod = Math.max(15000, state.config.timerSyncIntervalMs);
+  state.timer.syncIntervalId = window.setInterval(() => {
+    void syncTimer();
+  }, syncPeriod);
+}
+
 async function bootstrap() {
   if (!elements.root || !elements.timeline) {
     return;
@@ -372,6 +481,7 @@ async function bootstrap() {
 
   setupObservers();
   setupKeyboardNavigation();
+  startCountdown();
 
   const cachedRaw = readCachedRawMoments(state.config);
   if (cachedRaw) {

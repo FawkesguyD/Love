@@ -21,6 +21,8 @@ class TimelineUiServiceTests(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertTrue(response.headers["content-type"].startswith("text/html"))
         self.assertIn('id="timeline-app"', response.text)
+        self.assertIn('id="countdown"', response.text)
+        self.assertIn("До 14 февраля осталось", response.text)
         self.assertIn('src="/static/timeline-app.mjs"', response.text)
         self.assertIn('href="/static/timeline.css"', response.text)
 
@@ -41,6 +43,7 @@ class TimelineUiServiceTests(unittest.TestCase):
         self.assertEqual(js.status_code, 200)
         self.assertIn("javascript", js.headers["content-type"])
         self.assertIn("getCardsList", js.text)
+        self.assertIn("getTimer", js.text)
 
 
 if __name__ == "__main__":

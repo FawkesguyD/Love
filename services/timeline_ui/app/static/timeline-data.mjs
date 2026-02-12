@@ -69,12 +69,30 @@ export function normalizeMoment(rawMoment) {
 
   const text = typeof rawMoment.text === "string" ? rawMoment.text.trim() : "";
 
-  const images = Array.isArray(rawMoment.images)
-    ? rawMoment.images
-        .filter((value) => typeof value === "string")
-        .map((value) => value.trim())
-        .filter(Boolean)
-    : [];
+  const imageCandidates = [];
+
+  if (Array.isArray(rawMoment.images)) {
+    imageCandidates.push(...rawMoment.images);
+  }
+
+  if (Array.isArray(rawMoment.imageIds)) {
+    imageCandidates.push(...rawMoment.imageIds);
+  }
+
+  if (typeof rawMoment.imageId === "string") {
+    imageCandidates.push(rawMoment.imageId);
+  }
+
+  if (typeof rawMoment.image === "string") {
+    imageCandidates.push(rawMoment.image);
+  }
+
+  const images = [...new Set(
+    imageCandidates
+      .filter((value) => typeof value === "string")
+      .map((value) => value.trim())
+      .filter(Boolean)
+  )];
 
   const tags = Array.isArray(rawMoment.tags)
     ? rawMoment.tags
