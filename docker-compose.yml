@@ -1,0 +1,212 @@
+services:
+  # ================================================================
+  # EDGE PROXY
+  # ================================================================
+  traefik:
+    image: traefik:v3.0
+    command:
+      - "--api.dashboard=true"
+      - "--api.insecure=true"
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--entrypoints.web.address=:80"
+    ports:
+      - "3000:80"
+      - "3080:8080"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    networks:
+      - valentine-default
+
+  # ================================================================
+  # INFRA
+  # ================================================================
+  s3:
+    image: minio/minio
+    container_name: s3
+    command: server /data --console-address ":9001"
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    environment:
+      MINIO_ROOT_USER: dev
+      MINIO_ROOT_PASSWORD: devpassword
+    volumes:
+      - minio_data:/data
+    networks:
+      - valentine-default
+
+  s3-init:
+    image: minio/mc
+    container_name: s3-init
+    depends_on:
+      s3:
+        condition: service_started
+    environment:
+      S3_ENDPOINT: http://s3:9000
+      S3_ACCESS_KEY: dev
+      S3_SECRET_KEY: devpassword
+      S3_BUCKET: images
+      SEED_IMAGES_DIR: /seed-images
+    volumes:
+      - ./images:/seed-images:ro
+      - ./scripts/s3-init.sh:/init/s3-init.sh:ro
+    entrypoint: ["/bin/sh", "/init/s3-init.sh"]
+    restart: "no"
+    networks:
+      - valentine-default
+
+  mongo:
+    image: mongo:7
+    container_name: mongo
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: dev
+      MONGO_INITDB_ROOT_PASSWORD: devpassword
+    volumes:
+      - mongo_data:/data/db
+    networks:
+      - valentine-default
+
+  mongo-express:
+    image: mongo-express
+    container_name: mongo-express
+    depends_on:
+      mongo:
+        condition: service_started
+    ports:
+      - "8088:8081"
+    environment:
+      ME_CONFIG_MONGODB_SERVER: mongo
+      ME_CONFIG_MONGODB_ADMINUSERNAME: dev
+      ME_CONFIG_MONGODB_ADMINPASSWORD: devpassword
+      ME_CONFIG_BASICAUTH_USERNAME: admin
+      ME_CONFIG_BASICAUTH_PASSWORD: adminpassword
+    networks:
+      - valentine-default
+
+  # ================================================================
+  # APPS
+  # ================================================================
+  photostock:
+    build: ./services/photostock
+    container_name: photostock-api
+    labels:
+      - "traefik.enable=true"
+
+      - "traefik.http.services.photostock.loadbalancer.server.port=8000"
+
+      - "traefik.http.routers.photostock.rule=PathPrefix(`/api/images`)"
+      - "traefik.http.routers.photostock.entrypoints=web"
+      - "traefik.http.routers.photostock.middlewares=photostock-strip-api"
+      - "traefik.http.routers.photostock.service=photostock"
+
+      - "traefik.http.middlewares.photostock-strip-api.stripprefix.prefixes=/api"
+    depends_on:
+      s3-init:
+        condition: service_completed_successfully
+    environment:
+      S3_ENDPOINT: http://s3:9000
+      S3_ACCESS_KEY: dev
+      S3_SECRET_KEY: devpassword
+      S3_BUCKET: images
+    networks:
+      - valentine-default
+
+  carousel:
+    build: ./services/carousel
+    container_name: carousel-api
+    labels:
+      - "traefik.enable=true"
+
+      - "traefik.http.services.carousel.loadbalancer.server.port=8001"
+
+      # API
+      - "traefik.http.routers.carousel-api.rule=PathPrefix(`/api/carousel`)"
+      - "traefik.http.routers.carousel-api.entrypoints=web"
+      - "traefik.http.routers.carousel-api.middlewares=carousel-api-rewrite"
+      - "traefik.http.routers.carousel-api.service=carousel"
+
+      # UI
+      - "traefik.http.routers.carousel-ui.rule=PathPrefix(`/ui/carousel`)"
+      - "traefik.http.routers.carousel-ui.entrypoints=web"
+      - "traefik.http.routers.carousel-ui.middlewares=carousel-ui-rewrite"
+      - "traefik.http.routers.carousel-ui.service=carousel"
+
+      # Middlewares
+      - "traefik.http.middlewares.carousel-api-rewrite.replacepath.path=/carousel"
+      - "traefik.http.middlewares.carousel-ui-rewrite.replacepath.path=/carousel/view"
+    environment:
+      HOST: 0.0.0.0
+      PORT: 8001
+    networks:
+      - valentine-default
+
+  moments:
+    build: ./services/moments
+    container_name: moments-api
+    labels:
+      - "traefik.enable=true"
+
+      - "traefik.http.services.cards.loadbalancer.server.port=8002"
+
+      # API
+      - "traefik.http.routers.cards-api.rule=PathPrefix(`/api/cards`)"
+      - "traefik.http.routers.cards-api.entrypoints=web"
+      - "traefik.http.routers.cards-api.middlewares=cards-api-rewrite"
+      - "traefik.http.routers.cards-api.service=cards"
+
+      # UI
+      - "traefik.http.routers.cards-ui.rule=PathPrefix(`/ui/cards`)"
+      - "traefik.http.routers.cards-ui.entrypoints=web"
+      - "traefik.http.routers.cards-ui.middlewares=cards-ui-rewrite"
+      - "traefik.http.routers.cards-ui.service=cards"
+
+      # Middlewares
+      - "traefik.http.middlewares.cards-api-rewrite.replacepath.path=/api/v1/cards"
+      - "traefik.http.middlewares.cards-ui-rewrite.replacepath.path=/cards/view"
+    environment:
+      MONGO_URI: mongodb://dev:devpassword@mongo:27017/?authSource=admin
+      MONGO_DB_NAME: app
+      PHOTOSTOCK_BASE_URL: http://photostock:8000
+      HOST: 0.0.0.0
+      PORT: 8002
+    networks:
+      - valentine-default
+
+  timer:
+    build: ./services/timer
+    container_name: timer-api
+    labels:
+      - "traefik.enable=true"
+
+      - "traefik.http.services.timer.loadbalancer.server.port=8003"
+
+      # API
+      - "traefik.http.routers.timer-api.rule=PathPrefix(`/api/timer`)"
+      - "traefik.http.routers.timer-api.entrypoints=web"
+      - "traefik.http.routers.timer-api.middlewares=timer-api-rewrite"
+      - "traefik.http.routers.timer-api.service=timer"
+
+      # UI
+      - "traefik.http.routers.timer-ui.rule=PathPrefix(`/ui/timer`)"
+      - "traefik.http.routers.timer-ui.entrypoints=web"
+      - "traefik.http.routers.timer-ui.middlewares=timer-ui-rewrite"
+      - "traefik.http.routers.timer-ui.service=timer"
+
+      # Middlewares
+      - "traefik.http.middlewares.timer-api-rewrite.replacepath.path=/time"
+      - "traefik.http.middlewares.timer-ui-rewrite.replacepath.path=/view"
+    environment:
+      HOST: 0.0.0.0
+      PORT: 8003
+    networks:
+      - valentine-default
+
+volumes:
+  minio_data: {}
+  mongo_data: {}
+
+networks:
+  valentine-default: {}
