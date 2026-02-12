@@ -1,16 +1,4 @@
-import { formatDayLabel, formatMomentDateTime } from "../timeline-data.mjs";
-
-export function createDayDivider(dateIso) {
-  const divider = document.createElement("section");
-  divider.className = "timeline-day";
-
-  const label = document.createElement("h2");
-  label.className = "timeline-day-label";
-  label.textContent = formatDayLabel(dateIso);
-  divider.append(label);
-
-  return divider;
-}
+import { formatMomentDateTime } from "../timeline-data.mjs";
 
 function createImageNode({ imageUrl, altText, tileClass }) {
   const item = document.createElement("figure");

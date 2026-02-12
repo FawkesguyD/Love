@@ -143,25 +143,6 @@ body {
   background: linear-gradient(180deg, #f8dbe4 0%, #f1c0d0 100%);
 }
 
-.timeline-day {
-  display: flex;
-  justify-content: flex-start;
-  margin: 8px 0 18px;
-  padding-left: clamp(20px, 5vw, 80px);
-}
-
-.timeline-day-label {
-  margin: 0;
-  padding: 6px 12px;
-  border-radius: 999px;
-  border: 1px solid var(--border);
-  background: rgba(255, 255, 255, 0.92);
-  color: var(--muted);
-  font-weight: 700;
-  font-size: 0.82rem;
-  letter-spacing: 0.03em;
-}
-
 .timeline-card {
   position: relative;
   width: calc(50% - 52px);
@@ -503,11 +484,6 @@ body {
   .timeline::before {
     left: 22px;
     transform: none;
-  }
-
-  .timeline-day {
-    margin-left: 56px;
-    padding-left: 0;
   }
 
   .timeline-card,

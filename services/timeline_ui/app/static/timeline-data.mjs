@@ -87,12 +87,14 @@ export function normalizeMoment(rawMoment) {
     imageCandidates.push(rawMoment.image);
   }
 
-  const images = [...new Set(
-    imageCandidates
-      .filter((value) => typeof value === "string")
-      .map((value) => value.trim())
-      .filter(Boolean)
-  )];
+  const images = [
+    ...new Set(
+      imageCandidates
+        .filter((value) => typeof value === "string")
+        .map((value) => value.trim())
+        .filter(Boolean)
+    ),
+  ];
 
   const tags = Array.isArray(rawMoment.tags)
     ? rawMoment.tags
@@ -134,24 +136,6 @@ export function sortMomentsByDate(moments) {
 
     return left.id.localeCompare(right.id);
   });
-}
-
-export function buildDayKey(dateIso) {
-  return dateIso.slice(0, 10);
-}
-
-export function formatDayLabel(dateIso, locale = "en-GB") {
-  const date = toUtcDate(dateIso);
-  if (!date) {
-    return "Unknown date";
-  }
-
-  return new Intl.DateTimeFormat(locale, {
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
-    timeZone: "UTC",
-  }).format(date);
 }
 
 export function formatMomentDateTime(dateIso, locale = "en-GB") {

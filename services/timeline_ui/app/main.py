@@ -37,7 +37,7 @@ CACHE_TTL_MS = parse_int_env("CACHE_TTL_MS", 45000)
 MAX_MOMENTS = parse_int_env("MAX_MOMENTS", 500)
 BATCH_SIZE = parse_int_env("BATCH_SIZE", 16)
 MAX_RETRIES = parse_int_env("MAX_RETRIES", 2)
-TIMER_SYNC_INTERVAL_MS = parse_int_env("TIMER_SYNC_INTERVAL_MS", 60000)
+TIMER_SYNC_INTERVAL_MS = parse_int_env("TIMER_SYNC_INTERVAL_MS", 20000)
 
 
 app = FastAPI(title="Timeline UI Service")
@@ -79,7 +79,7 @@ def build_page_html() -> str:
         "<body>"
         "<main class=\"timeline-shell\" id=\"timeline-app\">"
         "<section class=\"countdown\" id=\"countdown\" aria-live=\"polite\">"
-        "<p class=\"countdown-label\">До 14 февраля осталось</p>"
+        "<p class=\"countdown-label\">Вместе уже</p>"
         "<p class=\"countdown-value\" id=\"countdown-value\">...</p>"
         "<p class=\"countdown-meta\" id=\"countdown-meta\"></p>"
         "</section>"
