@@ -355,7 +355,7 @@ class MomentsServiceTests(unittest.TestCase):
         self.assertIn('data-testid="moment-title"', response.text)
         self.assertIn('data-testid="moment-date"', response.text)
         self.assertIn("2026-02-10T12:00Z", response.text)
-        self.assertIn('src="/media/latest-1.jpg"', response.text)
+        self.assertIn('src="/api/images/latest-1"', response.text)
         self.assertNotIn("http://photostock:8000/images/", response.text)
 
     def test_view_random_accepts_parameter(self) -> None:
@@ -392,7 +392,7 @@ class MomentsServiceTests(unittest.TestCase):
         response = self._request("GET", "/cards/view")
 
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.text.count('src="/media/spiral-'), 6)
+        self.assertEqual(response.text.count('src="/api/images/spiral-'), 6)
         self.assertIn("+2 more", response.text)
 
     def test_view_by_id_returns_200_and_404(self) -> None:
@@ -402,7 +402,7 @@ class MomentsServiceTests(unittest.TestCase):
         self.assertEqual(found.status_code, 200)
         self.assertTrue(found.headers["content-type"].startswith("text/html"))
         self.assertIn("one", found.text)
-        self.assertIn('src="/media/one-1.jpg"', found.text)
+        self.assertIn('src="/api/images/one-1"', found.text)
         self.assertNotIn("http://photostock:8000/images/", found.text)
 
         missing = self._request("GET", f"/cards/view/{ObjectId()}")
