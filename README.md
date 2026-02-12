@@ -198,11 +198,13 @@ Legacy aliases (временная обратная совместимость):
 Одностраничная таймлайн-страница отдается отдельным UI-сервисом `timeline-ui`:
 
 - `GET /` (через Traefik: `http://localhost:3000/`)
+- sticky countdown сверху (данные из `GET /api/timer`, локальный тиковый расчет между sync)
 - вертикальная шкала + точки + карточки событий
 - сортировка по времени (`asc`)
 - группировка по дате
 - состояния: `loading`, `empty`, `error + retry`
 - lazy-loading изображений через `/api/images/{image_id}`
+- multi-image golden-spiral layout (до 6 изображений + `+N`)
 - легкие scroll-анимации и клавиатурная навигация (Arrow Up/Down по карточкам)
 
 Источник данных:
@@ -314,11 +316,13 @@ docker compose --profile diag stop curl-diag
 - `CARDS_LIST_PATH=/api/cards`
 - `CARD_BY_ID_PATH_TEMPLATE=/api/cards/{id}`
 - `IMAGES_PATH=/api/images`
+- `TIMER_PATH=/api/timer`
 - `REQUEST_TIMEOUT_MS=6000`
 - `CACHE_TTL_MS=45000`
 - `MAX_MOMENTS=500`
 - `BATCH_SIZE=16`
 - `MAX_RETRIES=2`
+- `TIMER_SYNC_INTERVAL_MS=60000`
 - `HOST=0.0.0.0`
 - `PORT=8010`
 
