@@ -23,10 +23,10 @@ FastAPI-сервис карусели, использующий S3/MinIO bucket 
 
 ## ENV
 
-- `S3_ENDPOINT` (default: `http://s3:9000`)
-- `S3_ACCESS_KEY` (default: `dev`)
-- `S3_SECRET_KEY` (default: `devpassword`)
-- `S3_BUCKET` (default: `images`)
+- `S3_ENDPOINT` (required)
+- `S3_ACCESS_KEY` (required)
+- `S3_SECRET_KEY` (required)
+- `S3_BUCKET` (required)
 - `S3_REGION` (default: `us-east-1`)
 - `S3_USE_SSL` (default: `false`)
 - `S3_FORCE_PATH_STYLE` (default: `true`)

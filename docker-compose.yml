@@ -29,8 +29,8 @@ services:
       - "9000:9000"
       - "9001:9001"
     environment:
-      MINIO_ROOT_USER: dev
-      MINIO_ROOT_PASSWORD: devpassword
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
     volumes:
       - minio_data:/data
     networks:
@@ -43,10 +43,10 @@ services:
       s3:
         condition: service_started
     environment:
-      S3_ENDPOINT: http://s3:9000
-      S3_ACCESS_KEY: dev
-      S3_SECRET_KEY: devpassword
-      S3_BUCKET: images
+      S3_ENDPOINT: ${S3_ENDPOINT}
+      S3_ACCESS_KEY: ${S3_ACCESS_KEY}
+      S3_SECRET_KEY: ${S3_SECRET_KEY}
+      S3_BUCKET: ${S3_BUCKET}
       SEED_IMAGES_DIR: /seed-images
     volumes:
       - ./images:/seed-images:ro
@@ -62,8 +62,8 @@ services:
     ports:
       - "27017:27017"
     environment:
-      MONGO_INITDB_ROOT_USERNAME: dev
-      MONGO_INITDB_ROOT_PASSWORD: devpassword
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_INITDB_ROOT_USERNAME}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_INITDB_ROOT_PASSWORD}
     volumes:
       - mongo_data:/data/db
     networks:
@@ -79,10 +79,10 @@ services:
       - "8088:8081"
     environment:
       ME_CONFIG_MONGODB_SERVER: mongo
-      ME_CONFIG_MONGODB_ADMINUSERNAME: dev
-      ME_CONFIG_MONGODB_ADMINPASSWORD: devpassword
-      ME_CONFIG_BASICAUTH_USERNAME: admin
-      ME_CONFIG_BASICAUTH_PASSWORD: adminpassword
+      ME_CONFIG_MONGODB_ADMINUSERNAME: ${MONGO_INITDB_ROOT_USERNAME}
+      ME_CONFIG_MONGODB_ADMINPASSWORD: ${MONGO_INITDB_ROOT_PASSWORD}
+      ME_CONFIG_BASICAUTH_USERNAME: ${MONGO_EXPRESS_USERNAME}
+      ME_CONFIG_BASICAUTH_PASSWORD: ${MONGO_EXPRESS_PASSWORD}
     networks:
       - valentine-default
 
@@ -107,10 +107,13 @@ services:
       s3-init:
         condition: service_completed_successfully
     environment:
-      S3_ENDPOINT: http://s3:9000
-      S3_ACCESS_KEY: dev
-      S3_SECRET_KEY: devpassword
-      S3_BUCKET: images
+      S3_ENDPOINT: ${S3_ENDPOINT}
+      S3_ACCESS_KEY: ${S3_ACCESS_KEY}
+      S3_SECRET_KEY: ${S3_SECRET_KEY}
+      S3_BUCKET: ${S3_BUCKET}
+      S3_REGION: ${S3_REGION}
+      S3_USE_SSL: ${S3_USE_SSL}
+      S3_FORCE_PATH_STYLE: ${S3_FORCE_PATH_STYLE}
     networks:
       - valentine-default
 
@@ -138,6 +141,13 @@ services:
       - "traefik.http.middlewares.carousel-api-rewrite.replacepath.path=/carousel"
       - "traefik.http.middlewares.carousel-ui-rewrite.replacepath.path=/carousel/view"
     environment:
+      S3_ENDPOINT: ${S3_ENDPOINT}
+      S3_ACCESS_KEY: ${S3_ACCESS_KEY}
+      S3_SECRET_KEY: ${S3_SECRET_KEY}
+      S3_BUCKET: ${S3_BUCKET}
+      S3_REGION: ${S3_REGION}
+      S3_USE_SSL: ${S3_USE_SSL}
+      S3_FORCE_PATH_STYLE: ${S3_FORCE_PATH_STYLE}
       HOST: 0.0.0.0
       PORT: 8001
     networks:
@@ -170,8 +180,8 @@ services:
       - "traefik.http.middlewares.cards-api-rewrite.replacepathregex.replacement=/api/v1/cards$${1}"
       - "traefik.http.middlewares.cards-ui-rewrite.replacepath.path=/cards/view"
     environment:
-      MONGO_URI: mongodb://dev:devpassword@mongo:27017/?authSource=admin
-      MONGO_DB_NAME: app
+      MONGO_URI: ${MONGO_URI}
+      MONGO_DB_NAME: ${MONGO_DB_NAME}
       PHOTOSTOCK_BASE_URL: http://photostock:8000
       HOST: 0.0.0.0
       PORT: 8002

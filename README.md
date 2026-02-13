@@ -23,6 +23,15 @@
 
 ## Запуск локально
 
+1. Скопируй шаблон переменных:
+
+```bash
+cp .env.example .env
+```
+
+2. При необходимости измени значения в `.env`.
+3. Подними сервисы:
+
 ```bash
 docker compose up --build
 ```
@@ -44,9 +53,9 @@ docker compose up --build
 - Timer view: `http://localhost:8003/view`
 - Timer health: `http://localhost:8003/health`
 - MinIO S3 API: `http://localhost:9000`
-- MinIO Console: `http://localhost:9001` (`dev` / `devpassword`)
-- MongoDB: `mongodb://localhost:27017` (`dev` / `devpassword`, `authSource=admin`)
-- Mongo Express: `http://localhost:8088` (`admin` / `adminpassword`)
+- MinIO Console: `http://localhost:9001` (логин/пароль из `.env`: `MINIO_ROOT_USER`, `MINIO_ROOT_PASSWORD`)
+- MongoDB: `mongodb://localhost:27017` (учетные данные из `.env`)
+- Mongo Express: `http://localhost:8088` (логин/пароль из `.env`: `MONGO_EXPRESS_USERNAME`, `MONGO_EXPRESS_PASSWORD`)
 
 ## Image/Carousel API
 
@@ -293,8 +302,8 @@ docker compose --profile diag stop curl-diag
 Для `photostock` и `carousel`:
 
 - `S3_ENDPOINT=http://s3:9000`
-- `S3_ACCESS_KEY=dev`
-- `S3_SECRET_KEY=devpassword`
+- `S3_ACCESS_KEY=<from .env>`
+- `S3_SECRET_KEY=<from .env>`
 - `S3_BUCKET=images`
 - `S3_REGION=us-east-1`
 - `S3_USE_SSL=false`
@@ -302,7 +311,7 @@ docker compose --profile diag stop curl-diag
 
 Для `moments`:
 
-- `MONGO_URI=mongodb://dev:devpassword@mongo:27017/?authSource=admin`
+- `MONGO_URI=<from .env>`
 - `MONGO_DB_NAME=app`
 - `PHOTOSTOCK_BASE_URL=http://photostock:8000`
 - `PHOTOSTOCK_TIMEOUT_MS=2000`
@@ -333,5 +342,10 @@ docker compose --profile diag stop curl-diag
 ## Mongo Admin UI
 
 1. Открой `http://localhost:8088`
-2. Войди `admin` / `adminpassword`
+2. Войди значениями из `.env`: `MONGO_EXPRESS_USERNAME` / `MONGO_EXPRESS_PASSWORD`
 3. Выбери БД `app` и коллекцию `moments`
+
+## Security Note
+
+- Не коммить `.env` и любые реальные секреты в репозиторий.
+- При утечке значений из истории/логов выполните ротацию ключей и паролей.

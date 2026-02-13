@@ -1,0 +1,15 @@
+# Environment files and secrets
+.env
+.env.*
+!.env.example
+!.env.template
+
+# Common secret artifacts
+*.pem
+*.key
+*.p12
+*.pfx
+
+# Python cache
+__pycache__/
+*.py[cod]

@@ -59,8 +59,8 @@ Legacy aliases (обратная совместимость):
 
 ## ENV
 
-- `MONGO_URI` (default: `mongodb://mongo:27017`)
-- `MONGO_DB_NAME` (default: `app`)
+- `MONGO_URI` (required)
+- `MONGO_DB_NAME` (required)
 - `PHOTOSTOCK_BASE_URL` (required for server-side media proxy, example: `http://photostock:8000`)
 - `PHOTOSTOCK_TIMEOUT_MS` (optional, default: `2000`)
 - `HOST` (default: `0.0.0.0`)
