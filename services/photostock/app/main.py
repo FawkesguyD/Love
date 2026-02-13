@@ -20,7 +20,19 @@ FALSE_VALUES = {"false", "0", "no"}
 SAFE_IMAGE_RE = re.compile(r"^[A-Za-z0-9_-]+$")
 CACHE_CONTROL_VALUE = "public, max-age=3600"
 
-load_dotenv(Path(__file__).resolve().parents[3] / ".env", override=False)
+def load_project_env() -> None:
+    current_file = Path(__file__).resolve()
+    for parent in current_file.parents:
+        env_path = parent / ".env"
+        if env_path.exists():
+            load_dotenv(env_path, override=False)
+            return
+
+    # Fallback to default dotenv lookup (uses cwd and parent traversal).
+    load_dotenv(override=False)
+
+
+load_project_env()
 
 
 def require_env_vars(names: list[str]) -> None:
