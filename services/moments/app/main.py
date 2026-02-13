@@ -6,6 +6,7 @@ import os
 import re
 from contextlib import asynccontextmanager
 from datetime import datetime, timezone
+from pathlib import Path
 from typing import Any, Literal
 from urllib.error import HTTPError, URLError
 from urllib.parse import quote
@@ -20,6 +21,7 @@ from pydantic import BaseModel, Field, field_validator
 from pymongo import ASCENDING, DESCENDING, MongoClient, ReturnDocument
 from pymongo.collection import Collection
 from pymongo.errors import PyMongoError
+from dotenv import load_dotenv
 
 logger = logging.getLogger("moments")
 
@@ -33,8 +35,20 @@ SAFE_PHOTOSTOCK_NAME_RE = re.compile(r"^[A-Za-z0-9_-]+$")
 TRUE_VALUES = {"true", "1", "yes"}
 FALSE_VALUES = {"false", "0", "no"}
 
-MONGO_URI = os.getenv("MONGO_URI", "mongodb://mongo:27017")
-MONGO_DB_NAME = os.getenv("MONGO_DB_NAME", "app")
+load_dotenv(Path(__file__).resolve().parents[3] / ".env", override=False)
+
+
+def require_env_vars(names: list[str]) -> None:
+    missing = [name for name in names if not os.getenv(name, "").strip()]
+    if missing:
+        missing_list = ", ".join(missing)
+        raise RuntimeError(f"Missing required environment variables: {missing_list}")
+
+
+require_env_vars(["MONGO_URI", "MONGO_DB_NAME"])
+
+MONGO_URI = os.getenv("MONGO_URI", "").strip()
+MONGO_DB_NAME = os.getenv("MONGO_DB_NAME", "").strip()
 PHOTOSTOCK_BASE_URL = os.getenv("PHOTOSTOCK_BASE_URL", "").strip().rstrip("/")
 
 

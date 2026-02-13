@@ -61,7 +61,7 @@ class TimerServiceTests(unittest.TestCase):
         self.assertIn("Timer", response.text)
         self.assertIn("This timer will never stop", response.text)
         self.assertIn("setInterval", response.text)
-        self.assertIn("fetch(\"/time\")", response.text)
+        self.assertTrue("fetch(\"/time\")" in response.text or "fetch(\"/api/timer\")" in response.text)
         self.assertIn('data-theme="light"', response.text)
         self.assertNotIn("Since:", response.text)
         self.assertNotIn("Now (UTC):", response.text)

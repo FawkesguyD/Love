@@ -9,6 +9,7 @@ from threading import Lock
 import boto3
 from botocore.config import Config
 from botocore.exceptions import BotoCoreError, ClientError
+from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException, Query, Request
 from fastapi.responses import HTMLResponse, Response
 
@@ -28,11 +29,23 @@ FALSE_VALUES = {"false", "0", "no"}
 SAFE_IMAGE_RE = re.compile(r"^[A-Za-z0-9_-]+$")
 VIEW_DEFAULT_REFRESH_SECONDS = 10
 
-S3_ENDPOINT = os.getenv("S3_ENDPOINT", "http://s3:9000")
-S3_ACCESS_KEY = os.getenv("S3_ACCESS_KEY", "dev")
-S3_SECRET_KEY = os.getenv("S3_SECRET_KEY", "devpassword")
-S3_BUCKET = os.getenv("S3_BUCKET", "images")
-S3_REGION = os.getenv("S3_REGION", "us-east-1")
+load_dotenv(Path(__file__).resolve().parents[3] / ".env", override=False)
+
+
+def require_env_vars(names: list[str]) -> None:
+    missing = [name for name in names if not os.getenv(name, "").strip()]
+    if missing:
+        missing_list = ", ".join(missing)
+        raise RuntimeError(f"Missing required environment variables: {missing_list}")
+
+
+require_env_vars(["S3_ENDPOINT", "S3_ACCESS_KEY", "S3_SECRET_KEY", "S3_BUCKET"])
+
+S3_ENDPOINT = os.getenv("S3_ENDPOINT", "").strip()
+S3_ACCESS_KEY = os.getenv("S3_ACCESS_KEY", "").strip()
+S3_SECRET_KEY = os.getenv("S3_SECRET_KEY", "").strip()
+S3_BUCKET = os.getenv("S3_BUCKET", "").strip()
+S3_REGION = os.getenv("S3_REGION", "us-east-1").strip() or "us-east-1"
 S3_USE_SSL = os.getenv("S3_USE_SSL", "false").strip().lower() in TRUE_VALUES
 S3_FORCE_PATH_STYLE = os.getenv("S3_FORCE_PATH_STYLE", "true").strip().lower() in TRUE_VALUES
 

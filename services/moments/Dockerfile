@@ -7,8 +7,8 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY app ./app
 
-ENV MONGO_URI=mongodb://mongo:27017
-ENV MONGO_DB_NAME=app
+ENV MONGO_URI=
+ENV MONGO_DB_NAME=
 ENV PHOTOSTOCK_BASE_URL=http://photostock:8000
 ENV PHOTOSTOCK_TIMEOUT_MS=2000
 ENV HOST=0.0.0.0

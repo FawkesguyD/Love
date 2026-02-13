@@ -1,5 +1,6 @@
 import asyncio
 import copy
+import os
 import random
 import unittest
 from dataclasses import dataclass
@@ -9,6 +10,9 @@ from unittest.mock import patch
 
 import httpx
 from bson import ObjectId
+
+os.environ.setdefault("MONGO_URI", "mongodb://test_user:test_password@localhost:27017/?authSource=admin")
+os.environ.setdefault("MONGO_DB_NAME", "app")
 
 import services.moments.app.main as main
 

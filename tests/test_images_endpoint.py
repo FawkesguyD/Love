@@ -1,7 +1,13 @@
 import asyncio
+import os
 import unittest
 
 import httpx
+
+os.environ.setdefault("S3_ENDPOINT", "http://s3:9000")
+os.environ.setdefault("S3_ACCESS_KEY", "test_s3_access_key")
+os.environ.setdefault("S3_SECRET_KEY", "test_s3_secret_key")
+os.environ.setdefault("S3_BUCKET", "images")
 
 import services.photostock.app.main as main
 from fake_s3 import FakeS3Client

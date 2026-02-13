@@ -2,10 +2,10 @@
 set -eu
 
 MINIO_ALIAS="${MINIO_ALIAS:-local}"
-S3_ENDPOINT="${S3_ENDPOINT:-http://s3:9000}"
-S3_ACCESS_KEY="${S3_ACCESS_KEY:-dev}"
-S3_SECRET_KEY="${S3_SECRET_KEY:-devpassword}"
-S3_BUCKET="${S3_BUCKET:-images}"
+S3_ENDPOINT="${S3_ENDPOINT:?Missing required env var S3_ENDPOINT}"
+S3_ACCESS_KEY="${S3_ACCESS_KEY:?Missing required env var S3_ACCESS_KEY}"
+S3_SECRET_KEY="${S3_SECRET_KEY:?Missing required env var S3_SECRET_KEY}"
+S3_BUCKET="${S3_BUCKET:?Missing required env var S3_BUCKET}"
 SEED_IMAGES_DIR="${SEED_IMAGES_DIR:-/seed-images}"
 
 attempt=1

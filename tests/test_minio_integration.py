@@ -6,6 +6,11 @@ import boto3
 import httpx
 from botocore.config import Config
 
+os.environ.setdefault("S3_ENDPOINT", "http://localhost:9000")
+os.environ.setdefault("S3_ACCESS_KEY", "test_s3_access_key")
+os.environ.setdefault("S3_SECRET_KEY", "test_s3_secret_key")
+os.environ.setdefault("S3_BUCKET", "images")
+
 import services.carousel.app.main as carousel_main
 import services.photostock.app.main as image_main
 
@@ -18,8 +23,8 @@ class MinioIntegrationTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
         endpoint = os.getenv("S3_ENDPOINT", "http://localhost:9000")
-        access_key = os.getenv("S3_ACCESS_KEY", "dev")
-        secret_key = os.getenv("S3_SECRET_KEY", "devpassword")
+        access_key = os.getenv("S3_ACCESS_KEY", "test_s3_access_key")
+        secret_key = os.getenv("S3_SECRET_KEY", "test_s3_secret_key")
         region = os.getenv("S3_REGION", "us-east-1")
         bucket = os.getenv("S3_TEST_BUCKET", "images-integration")
 
