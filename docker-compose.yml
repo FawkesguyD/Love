@@ -11,8 +11,8 @@ services:
       - "--providers.docker.exposedbydefault=false"
       - "--entrypoints.web.address=:80"
     ports:
-      - "3000:80"
-      - "3080:8080"
+      - "${TRAEFIK_HTTP_PORT}:80"
+      - "${TRAEFIK_DASHBOARD_PORT}:8080"
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
     networks:
@@ -26,9 +26,11 @@ services:
     container_name: s3
     command: server /data --console-address ":9001"
     ports:
-      - "9000:9000"
-      - "9001:9001"
+      - "${MINIO_API_PORT}:9000"
+      - "${MINIO_CONSOLE_PORT}:9001"
     environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
       MINIO_ROOT_USER: ${MINIO_ROOT_USER}
       MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
     volumes:
@@ -47,7 +49,7 @@ services:
       S3_ACCESS_KEY: ${S3_ACCESS_KEY}
       S3_SECRET_KEY: ${S3_SECRET_KEY}
       S3_BUCKET: ${S3_BUCKET}
-      SEED_IMAGES_DIR: /seed-images
+      SEED_IMAGES_DIR: ${SEED_IMAGES_DIR}
     volumes:
       - ./images:/seed-images:ro
       - ./scripts/s3-init.sh:/init/s3-init.sh:ro
@@ -60,8 +62,10 @@ services:
     image: mongo:7
     container_name: mongo
     ports:
-      - "27017:27017"
+      - "${MONGO_PORT}:27017"
     environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_INITDB_ROOT_USERNAME}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_INITDB_ROOT_PASSWORD}
       MONGO_INITDB_ROOT_USERNAME: ${MONGO_INITDB_ROOT_USERNAME}
       MONGO_INITDB_ROOT_PASSWORD: ${MONGO_INITDB_ROOT_PASSWORD}
     volumes:
@@ -76,9 +80,9 @@ services:
       mongo:
         condition: service_started
     ports:
-      - "8088:8081"
+      - "${MONGO_EXPRESS_PORT}:8081"
     environment:
-      ME_CONFIG_MONGODB_SERVER: mongo
+      ME_CONFIG_MONGODB_SERVER: ${MONGO_HOST}
       ME_CONFIG_MONGODB_ADMINUSERNAME: ${MONGO_INITDB_ROOT_USERNAME}
       ME_CONFIG_MONGODB_ADMINPASSWORD: ${MONGO_INITDB_ROOT_PASSWORD}
       ME_CONFIG_BASICAUTH_USERNAME: ${MONGO_EXPRESS_USERNAME}
@@ -95,7 +99,7 @@ services:
     labels:
       - "traefik.enable=true"
 
-      - "traefik.http.services.photostock.loadbalancer.server.port=8000"
+      - "traefik.http.services.photostock.loadbalancer.server.port=${PHOTOSTOCK_PORT}"
 
       - "traefik.http.routers.photostock.rule=PathPrefix(`/api/images`)"
       - "traefik.http.routers.photostock.entrypoints=web"
@@ -114,6 +118,13 @@ services:
       S3_REGION: ${S3_REGION}
       S3_USE_SSL: ${S3_USE_SSL}
       S3_FORCE_PATH_STYLE: ${S3_FORCE_PATH_STYLE}
+      S3_ENDPOINT: ${S3_ENDPOINT}
+      S3_ACCESS_KEY: ${S3_ACCESS_KEY}
+      S3_SECRET_KEY: ${S3_SECRET_KEY}
+      S3_BUCKET: ${S3_BUCKET}
+      S3_REGION: ${S3_REGION}
+      S3_USE_SSL: ${S3_USE_SSL}
+      S3_FORCE_PATH_STYLE: ${S3_FORCE_PATH_STYLE}
     networks:
       - valentine-default
 
@@ -123,7 +134,7 @@ services:
     labels:
       - "traefik.enable=true"
 
-      - "traefik.http.services.carousel.loadbalancer.server.port=8001"
+      - "traefik.http.services.carousel.loadbalancer.server.port=${CAROUSEL_PORT}"
 
       # API
       - "traefik.http.routers.carousel-api.rule=PathPrefix(`/api/carousel`)"
@@ -148,8 +159,8 @@ services:
       S3_REGION: ${S3_REGION}
       S3_USE_SSL: ${S3_USE_SSL}
       S3_FORCE_PATH_STYLE: ${S3_FORCE_PATH_STYLE}
-      HOST: 0.0.0.0
-      PORT: 8001
+      HOST: ${CAROUSEL_HOST}
+      PORT: ${CAROUSEL_PORT}
     networks:
       - valentine-default
 
@@ -159,7 +170,7 @@ services:
     labels:
       - "traefik.enable=true"
 
-      - "traefik.http.services.cards.loadbalancer.server.port=8002"
+      - "traefik.http.services.cards.loadbalancer.server.port=${MOMENTS_PORT}"
 
       # API
       - "traefik.http.routers.cards-api.rule=PathPrefix(`/api/cards`)"
@@ -182,9 +193,10 @@ services:
     environment:
       MONGO_URI: ${MONGO_URI}
       MONGO_DB_NAME: ${MONGO_DB_NAME}
-      PHOTOSTOCK_BASE_URL: http://photostock:8000
-      HOST: 0.0.0.0
-      PORT: 8002
+      PHOTOSTOCK_BASE_URL: ${PHOTOSTOCK_BASE_URL}
+      PHOTOSTOCK_TIMEOUT_MS: ${PHOTOSTOCK_TIMEOUT_MS}
+      HOST: ${MOMENTS_HOST}
+      PORT: ${MOMENTS_PORT}
     networks:
       - valentine-default
 
@@ -194,26 +206,26 @@ services:
     labels:
       - "traefik.enable=true"
 
-      - "traefik.http.services.timeline-ui.loadbalancer.server.port=8010"
+      - "traefik.http.services.timeline-ui.loadbalancer.server.port=${TIMELINE_UI_PORT}"
 
       - "traefik.http.routers.timeline-home.rule=Path(`/`) || PathPrefix(`/static`)"
       - "traefik.http.routers.timeline-home.entrypoints=web"
       - "traefik.http.routers.timeline-home.service=timeline-ui"
       - "traefik.http.routers.timeline-home.priority=1"
     environment:
-      API_BASE_URL: ""
-      CARDS_LIST_PATH: /api/cards
-      CARD_BY_ID_PATH_TEMPLATE: /api/cards/{id}
-      IMAGES_PATH: /api/images
-      TIMER_PATH: /api/timer
-      REQUEST_TIMEOUT_MS: 6000
-      CACHE_TTL_MS: 45000
-      MAX_MOMENTS: 500
-      BATCH_SIZE: 16
-      MAX_RETRIES: 2
-      TIMER_SYNC_INTERVAL_MS: 20000
-      HOST: 0.0.0.0
-      PORT: 8010
+      API_BASE_URL: ${API_BASE_URL}
+      CARDS_LIST_PATH: ${CARDS_LIST_PATH}
+      CARD_BY_ID_PATH_TEMPLATE: ${CARD_BY_ID_PATH_TEMPLATE}
+      IMAGES_PATH: ${IMAGES_PATH}
+      TIMER_PATH: ${TIMER_PATH}
+      REQUEST_TIMEOUT_MS: ${REQUEST_TIMEOUT_MS}
+      CACHE_TTL_MS: ${CACHE_TTL_MS}
+      MAX_MOMENTS: ${MAX_MOMENTS}
+      BATCH_SIZE: ${BATCH_SIZE}
+      MAX_RETRIES: ${MAX_RETRIES}
+      TIMER_SYNC_INTERVAL_MS: ${TIMER_SYNC_INTERVAL_MS}
+      HOST: ${TIMELINE_UI_HOST}
+      PORT: ${TIMELINE_UI_PORT}
     networks:
       - valentine-default
 
@@ -223,7 +235,7 @@ services:
     labels:
       - "traefik.enable=true"
 
-      - "traefik.http.services.timer.loadbalancer.server.port=8003"
+      - "traefik.http.services.timer.loadbalancer.server.port=${TIMER_PORT}"
 
       # API
       - "traefik.http.routers.timer-api.rule=PathPrefix(`/api/timer`)"
@@ -241,8 +253,8 @@ services:
       - "traefik.http.middlewares.timer-api-rewrite.replacepath.path=/time"
       - "traefik.http.middlewares.timer-ui-rewrite.replacepath.path=/view"
     environment:
-      HOST: 0.0.0.0
-      PORT: 8003
+      HOST: ${TIMER_HOST}
+      PORT: ${TIMER_PORT}
     networks:
       - valentine-default
 

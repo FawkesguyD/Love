@@ -33,6 +33,8 @@ cp .env.example .env
 3. Подними сервисы:
 
 ```bash
+cp .env.example .env
+# заполнить секреты/значения в .env
 docker compose up --build
 ```
 
@@ -53,9 +55,15 @@ docker compose up --build
 - Timer view: `http://localhost:8003/view`
 - Timer health: `http://localhost:8003/health`
 - MinIO S3 API: `http://localhost:9000`
+<<<<<<< HEAD
 - MinIO Console: `http://localhost:9001` (логин/пароль из `.env`: `MINIO_ROOT_USER`, `MINIO_ROOT_PASSWORD`)
 - MongoDB: `mongodb://localhost:27017` (учетные данные из `.env`)
 - Mongo Express: `http://localhost:8088` (логин/пароль из `.env`: `MONGO_EXPRESS_USERNAME`, `MONGO_EXPRESS_PASSWORD`)
+=======
+- MinIO Console: `http://localhost:9001` (логин/пароль из `MINIO_ROOT_USER` / `MINIO_ROOT_PASSWORD` в корневом `.env`)
+- MongoDB: `mongodb://localhost:27017` (логин/пароль из `MONGO_INITDB_ROOT_USERNAME` / `MONGO_INITDB_ROOT_PASSWORD`, `authSource=admin`)
+- Mongo Express: `http://localhost:8088` (логин/пароль из `MONGO_EXPRESS_USERNAME` / `MONGO_EXPRESS_PASSWORD`)
+>>>>>>> c6b130c (change credentials)
 
 ## Image/Carousel API
 
@@ -299,8 +307,9 @@ docker compose --profile diag stop curl-diag
 
 ## ENV
 
-Для `photostock` и `carousel`:
+Все конфиги запуска вынесены в корневой `.env` (для compose и всех сервисов/инфры).
 
+<<<<<<< HEAD
 - `S3_ENDPOINT=http://s3:9000`
 - `S3_ACCESS_KEY=<from .env>`
 - `S3_SECRET_KEY=<from .env>`
@@ -308,9 +317,17 @@ docker compose --profile diag stop curl-diag
 - `S3_REGION=us-east-1`
 - `S3_USE_SSL=false`
 - `S3_FORCE_PATH_STYLE=true`
+=======
+Основные группы переменных:
+>>>>>>> c6b130c (change credentials)
 
-Для `moments`:
+- Edge/proxy: `TRAEFIK_HTTP_PORT`, `TRAEFIK_DASHBOARD_PORT`
+- MinIO/S3: `MINIO_*`, `S3_*`, `SEED_IMAGES_DIR`
+- Mongo/Mongo Express: `MONGO_*`, `MONGO_EXPRESS_*`
+- App runtime ports/hosts: `PHOTOSTOCK_PORT`, `CAROUSEL_*`, `MOMENTS_*`, `TIMER_*`, `TIMELINE_UI_*`
+- Timeline UI client config: `API_BASE_URL`, `CARDS_LIST_PATH`, `CARD_BY_ID_PATH_TEMPLATE`, `IMAGES_PATH`, `TIMER_PATH`, `REQUEST_TIMEOUT_MS`, `CACHE_TTL_MS`, `MAX_MOMENTS`, `BATCH_SIZE`, `MAX_RETRIES`, `TIMER_SYNC_INTERVAL_MS`
 
+<<<<<<< HEAD
 - `MONGO_URI=<from .env>`
 - `MONGO_DB_NAME=app`
 - `PHOTOSTOCK_BASE_URL=http://photostock:8000`
@@ -338,11 +355,18 @@ docker compose --profile diag stop curl-diag
 
 - `HOST=0.0.0.0`
 - `PORT=8003`
+=======
+Шаблон значений: `.env.example`.
+>>>>>>> c6b130c (change credentials)
 
 ## Mongo Admin UI
 
 1. Открой `http://localhost:8088`
+<<<<<<< HEAD
 2. Войди значениями из `.env`: `MONGO_EXPRESS_USERNAME` / `MONGO_EXPRESS_PASSWORD`
+=======
+2. Войди с `MONGO_EXPRESS_USERNAME` / `MONGO_EXPRESS_PASSWORD` из корневого `.env`
+>>>>>>> c6b130c (change credentials)
 3. Выбери БД `app` и коллекцию `moments`
 
 ## Security Note
