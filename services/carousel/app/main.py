@@ -29,7 +29,10 @@ FALSE_VALUES = {"false", "0", "no"}
 SAFE_IMAGE_RE = re.compile(r"^[A-Za-z0-9_-]+$")
 VIEW_DEFAULT_REFRESH_SECONDS = 10
 
-load_dotenv(Path(__file__).resolve().parents[3] / ".env", override=False)
+# .env is loaded only for local development; in Docker, env vars come from compose
+env_file = Path(__file__).resolve().parents[1] / ".env"
+if env_file.exists():
+    load_dotenv(env_file, override=False)
 
 
 def require_env_vars(names: list[str]) -> None:
